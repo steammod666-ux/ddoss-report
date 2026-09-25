@@ -638,7 +638,9 @@ VNPT cấp **`14.253.193.8/29`** — block 8 địa chỉ, netmask `255.255.255.
 | **Dùng được (6 IP)** | `14.253.193.9` → `14.253.193.14` |
 | Broadcast (không dùng được) | `14.253.193.15` |
 
-Thông thường nhà mạng giữ 1 IP làm gateway, còn lại 5 IP cho khách hàng. Máy chủ game sẽ dùng **một** IP trong dải này (IP cụ thể điền vào bảng ở mục C.2).
+Đã kiểm chứng trên thiết bị thật (25/09): dải được **route về phiên PPPoE** của thuê bao (IP WAN vẫn động), `14.253.193.9` gán trên router trả lời ping từ ngoài, và route vẫn giữ sau khi phiên PPPoE quay lại — tức route bám theo tài khoản, không bám IP WAN.
+
+> **IP chính thức chạy dịch vụ game: `14.253.193.11`** — đây là IP cần áp AntiDDoS. Các IP còn lại trong dải chưa sử dụng.
 
 ### C.2 Danh sách cổng và dịch vụ cần bảo vệ
 
