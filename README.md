@@ -18,7 +18,7 @@
 5. [Nguồn tấn công (botnet)](#5-nguồn-tấn-công-botnet)
 6. [Những gì phía khách đã làm và giới hạn](#6-những-gì-phía-khách-đã-làm-và-giới-hạn-của-nó)
 7. [Đề nghị cụ thể với VNPT](#7-đề-nghị-cụ-thể-với-vnpt)
-8. [Phụ lục](#phụ-lục-a--các-file-dữ-liệu-kèm-theo)
+8. [Phụ lục A — file dữ liệu](#phụ-lục-a--các-file-dữ-liệu-kèm-theo) · [B — phương pháp](#phụ-lục-b--phương-pháp-và-độ-tin-cậy) · [C — khai báo cổng gửi VNPT](#phụ-lục-c--khai-báo-dịch-vụ-và-cổng-gửi-kèm-form-đăng-ký-antiddos)
 
 ---
 
@@ -79,7 +79,9 @@ flowchart LR
 
 | Hạng mục | Giá trị |
 |---|---|
-| Đường truyền bị tấn công | Cáp quang VNPT #1 → ONT iGate GW020-H (bridge) → MikroTik hEX S quay PPPoE, **IP public động** |
+| Đường truyền bị tấn công | Cáp quang VNPT #1 → ONT iGate GW020-H (bridge) → MikroTik hEX S quay PPPoE |
+| Dải IP được bảo vệ (VNPT cấp 25/09/2026) | **`14.253.193.8/29`** — 8 địa chỉ, dùng được `14.253.193.9`–`14.253.193.14`. Xem [Phụ lục C.1](#c1-dải-ip-được-bảo-vệ) |
+| Trước khi có IP tĩnh | IP public **động**, đã xoay rất nhiều lần (xem ghi chú bên dưới) |
 | Trần thực đo | Nhận tới **451 Mbps**; rất nhiều đợt bị chặn đúng ở **185–190 Mbps** (nghi trần hướng quốc tế) |
 | Năng lực router khách | MikroTik hEX S (MT7621): NAT ~500 Mbps, **~64.000 pps** với gói nhỏ |
 | Cổng dịch vụ mở ra Internet | UDP **7777** (game), UDP 27015, 64738, 15000, 10000; TCP 7777–7779, **8888** (RCON), 10000, 15000, 64738 |
@@ -623,6 +625,113 @@ Tất cả trong thư mục [`du-lieu/`](du-lieu/), định dạng CSV (UTF-8, p
 
 1. `uniq_ip` trong log chỉ đếm IP **chưa được xác thực hai chiều**, nên ở trạng thái bình thường thường bằng 0 — không phải lỗi.
 2. Danh sách top IP nguồn chỉ ghi **20 IP nhiều nhất mỗi giây**, nên bảng `03-ip-nguon-tan-cong.csv` (2.316 IP) **nhỏ hơn thực tế**; con số đầy đủ hơn là danh sách 6.985 IP đã bị chặn (`04-...csv`) và tổng hợp 7.161 IP ở §5.1.
+
+## Phụ lục C — Khai báo dịch vụ và cổng (gửi kèm form đăng ký AntiDDoS)
+
+### C.1 Dải IP được bảo vệ
+
+VNPT cấp **`14.253.193.8/29`** — block 8 địa chỉ, netmask `255.255.255.248`:
+
+| | Địa chỉ |
+|---|---|
+| Địa chỉ mạng (không dùng được) | `14.253.193.8` |
+| **Dùng được (6 IP)** | `14.253.193.9` → `14.253.193.14` |
+| Broadcast (không dùng được) | `14.253.193.15` |
+
+Thông thường nhà mạng giữ 1 IP làm gateway, còn lại 5 IP cho khách hàng. Máy chủ game sẽ dùng **một** IP trong dải này (IP cụ thể điền vào bảng ở mục C.2).
+
+### C.2 Danh sách cổng và dịch vụ cần bảo vệ
+
+```
+--- Dịch vụ game (bắt buộc) ---
+UDP 7777        The Isle: Evrima - cổng game chính (250 slot)
+                *** ĐÂY LÀ CỔNG DUY NHẤT ĐANG BỊ TẤN CÔNG - 100% lưu lượng DDoS ***
+UDP 7778        The Isle: Evrima - QueryPort (truy vấn thông tin server)
+UDP 7779        The Isle: Evrima - dự phòng dải cổng game
+TCP 7777-7779   The Isle: Evrima - dải cổng game (TCP)
+
+--- Quản trị (bắt buộc) ---
+TCP 8888        RCON - điều khiển/quản trị máy chủ game
+TCP 10000       Hệ thống hàng đợi (queue) của máy chủ game
+
+--- Dịch vụ phụ trợ ---
+UDP 27015       Steam query - truy vấn danh sách server
+UDP/TCP 64738   VoIP (Mumble) - thoại trong game
+UDP/TCP 15000   Dịch vụ phụ trợ của máy chủ game
+
+--- Lưu lượng hồi đáp (KHÔNG phải cổng dịch vụ, nhưng BẮT BUỘC cho qua) ---
+TCP/UDP 49152-65535
+                Cổng tạm của các kết nối do CHÍNH MÁY CHỦ mở ra Internet:
+                phần mềm quản trị IslePilot (HTTPS qua Cloudflare), đăng nhập
+                Steam/Epic EOS, cập nhật game. Chặn nhóm này = mất quyền quản
+                trị máy chủ và người chơi không đăng nhập được.
+```
+
+Lưu lượng thật đo được trên từng cổng trong 9 ngày (đối chiếu với [`du-lieu/06-cong-dich-theo-ngay.csv`](du-lieu/06-cong-dich-theo-ngay.csv)):
+
+| Cổng | Gói quan sát | Gói bị hủy | Tình trạng |
+|---|---|---|---|
+| UDP 7777 | 887.693.298 | **90.226.637** | Đang chạy — **toàn bộ tấn công ở đây** |
+| TCP 8888 | 3.950.915 | 0 | Đang chạy (RCON) |
+| TCP 10000 | 331.797 | 683 | Đang chạy (queue) |
+| UDP 27015 | 12 | 0 | Có mở, gần như không dùng |
+| UDP 64738 | 9 | 7 | Có mở, gần như không dùng |
+| UDP 7778 / 7779 | 7 / 4 | 7 / 4 | Có mở, gần như không dùng |
+| UDP 15000 | 1 | 1 | Có mở, gần như không dùng |
+
+### C.3 Whitelist
+
+```
+1) 31.97.71.159  — VPS riêng của khách hàng, kết nối RCON vào TCP/8888.
+                   Đây là nguồn DUY NHẤT hợp lệ kết nối vào cổng 8888
+                   (xác nhận qua log: 20.240/20.248 gói).
+
+2) Toàn bộ dải IPv4 công khai của Cloudflare, ÁP DỤNG CHO TCP:
+   173.245.48.0/20   103.21.244.0/22   103.22.200.0/22   103.31.4.0/22
+   141.101.64.0/18   108.162.192.0/18  190.93.240.0/20   188.114.96.0/20
+   197.234.240.0/22  198.41.128.0/17   162.158.0.0/15    104.16.0.0/13
+   104.24.0.0/14     172.64.0.0/13     131.0.72.0/22
+   (nguồn: https://www.cloudflare.com/ips-v4)
+
+   Lý do: phần mềm quản trị máy chủ game (IslePilot) chạy TRÊN host và kết nối
+   RA NGOÀI qua Cloudflare. Nhà cung cấp KHÔNG công bố IP thật, nên bắt buộc
+   phải tin cậy toàn bộ dải Cloudflare cho TCP.
+```
+
+### C.4 Yêu cầu bắt buộc khi áp dụng mitigation
+
+```
+1. Chỉ áp dụng lọc/rate-limit cho UDP cổng 7777. Đây là cổng duy nhất bị tấn
+   công (100% lưu lượng tấn công, xác nhận qua log 9 ngày).
+
+2. PHẢI giữ nguyên lưu lượng hồi đáp của các kết nối do máy chủ tự mở ra
+   (inbound tới cổng tạm 49152-65535). Máy chủ chủ động kết nối ra Internet cho:
+   phần mềm quản trị IslePilot (HTTPS qua Cloudflare), đăng nhập Steam/Epic EOS,
+   cập nhật game. Chặn nhóm này là mất quyền quản trị máy chủ và người chơi
+   không đăng nhập được.
+
+3. KHÔNG lọc theo quốc gia / GeoIP. Người chơi đến từ khắp thế giới và phần mềm
+   quản trị đặt tại châu Âu.
+
+4. KHÔNG áp dụng chính sách "chỉ mở các cổng đã khai báo, chặn phần còn lại"
+   cho chiều vào của thuê bao này.
+
+5. Lưu lượng hợp lệ có thể lên tới 413 Mbps khi máy chủ cập nhật game (nguồn
+   TCP/UDP 443, đích cổng tạm) — KHÔNG phải tấn công.
+```
+
+**Bối cảnh cho mục 2 và 3:** chính hai lỗi này đã từng xảy ra với tường lửa đặt tại host. Phần mềm quản trị IslePilot chạy trên máy chủ và chỉ kết nối **ra ngoài** qua Cloudflare, không có IP cố định để whitelist; khi tường lửa hủy nhầm gói hồi đáp (bắt cả IPv6 rồi hủy gói không phân tích được), IslePilot mất kết nối và báo "Unreachable / Network failure" — rất khó chẩn đoán vì không có thông báo lỗi tường lửa nào. Đề nghị VNPT lưu ý để không lặp lại ở tầng mạng.
+
+### C.5 Kiểm tra sau khi bật mitigation
+
+Đề nghị bật thử mitigation **10–15 phút lúc không bị tấn công**, kiểm tra theo thứ tự:
+
+1. **Phần mềm quản trị IslePilot** còn báo trạng thái "Injected"/online không — đây là thứ hỏng đầu tiên nếu chặn nhầm.
+2. **Người chơi quốc tế** còn vào được server không.
+3. **RCON** từ `31.97.71.159` vào TCP/8888 còn kết nối được không.
+4. Trên máy chủ: `Test-NetConnection islepilot.eu -Port 443` và `Get-NetTCPConnection -RemotePort 443` — nếu kết nối ra ngoài đứt thì đúng là lỗi ở mục C.4.2.
+
+---
 
 ---
 
