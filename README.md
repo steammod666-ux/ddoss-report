@@ -5,6 +5,10 @@
 **Nguồn dữ liệu:** log của WAF-Shield Enterprise v3.7.5 chạy trực tiếp trên host (WinDivert 2.2, bắt gói ở tầng kernel trước khi tới socket ứng dụng) — `shield.log` + `forensic.log` (snapshot mỗi 1 giây). Tổng **1,4 GB log thô** đã được bóc tách bằng script; mọi số liệu trong báo cáo sinh trực tiếp từ log, không phải ước lượng.
 **Mục đích:** cung cấp cho đội scrubbing VNPT toàn bộ hồ sơ tấn công — thời điểm, vector, băng thông, pps, cổng đích, tập IP nguồn, và các đặc trưng dùng được làm signature lọc.
 
+> ## 🔴 Cập nhật 02/10/2026 — tấn công SAU KHI AntiDDoS đã active
+> Scrubbing đã ép bot nước ngoài xuống ≤ 4,7 Mbps/IP, nhưng **(1) lưu lượng từ IP trong nước không được lọc** (một IP Viettel phát 112,7 Mbps, hai đợt 220–250 Mbps về tận thuê bao) và **(2) bão IP giả mạo 7.000–11.700 IP/giây chỉ 10–30 Mbps** vẫn đi qua, làm server game sập 5 lần.
+> **→ Xem báo cáo riêng: [bao-cao-2026-10-02.md](bao-cao-2026-10-02.md)** (kèm 4 file CSV `07`–`10` trong `du-lieu/`).
+
 > **Dữ liệu chi tiết dạng bảng nằm trong [`du-lieu/`](du-lieu/)** — 6 file CSV mở được bằng Excel. Xem [Phụ lục A](#phụ-lục-a--các-file-dữ-liệu-kèm-theo).
 
 ---
