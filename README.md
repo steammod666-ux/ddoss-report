@@ -5,9 +5,15 @@
 **Nguồn dữ liệu:** log của WAF-Shield Enterprise v3.7.5 chạy trực tiếp trên host (WinDivert 2.2, bắt gói ở tầng kernel trước khi tới socket ứng dụng) — `shield.log` + `forensic.log` (snapshot mỗi 1 giây). Tổng **1,4 GB log thô** đã được bóc tách bằng script; mọi số liệu trong báo cáo sinh trực tiếp từ log, không phải ước lượng.
 **Mục đích:** cung cấp cho đội scrubbing VNPT toàn bộ hồ sơ tấn công — thời điểm, vector, băng thông, pps, cổng đích, tập IP nguồn, và các đặc trưng dùng được làm signature lọc.
 
-> ## 🔴 Cập nhật 02/10/2026 — tấn công SAU KHI AntiDDoS đã active
-> Scrubbing đã ép bot nước ngoài xuống ≤ 4,7 Mbps/IP, nhưng **(1) lưu lượng từ IP trong nước không được lọc** (một IP Viettel phát 112,7 Mbps, hai đợt 220–250 Mbps về tận thuê bao) và **(2) bão IP giả mạo 7.000–11.700 IP/giây chỉ 10–30 Mbps** vẫn đi qua, làm server game sập 5 lần. **03/10 02:00** lặp lại: một thuê bao VNPT `125.235.229.146` phát 64 Mbps suốt 17 phút không bị cắt. **06/10**: 3 vector mới — **TCP flood 1.440 B vào 7777 đi thẳng qua scrubbing** (200 IP nước ngoài ≥ 10 Mbps), SYN flood vào TCP/10000, UDP 228 B ở 135.000 pps; 235–250 Mbps lọt xuống suốt 3 giờ, server trống 1,5 giờ — **[báo cáo riêng 06/10](bao-cao-2026-10-06.md)**.
-> **→ Xem báo cáo riêng: [bao-cao-2026-10-02.md](bao-cao-2026-10-02.md)** (kèm 4 file CSV `07`–`10` trong `du-lieu/`).
+> ## 🔴 CẬP NHẬT 07/10/2026 — mới nhất
+> Sau khi VNPT tối ưu scrubbing trong ngày 07/10: **số giây vượt 200 Mbps giảm 99%** (1.145 → 12 giây), nhưng kẻ tấn công đổi sang **gói nhỏ** nên **pps lại tăng 81%** và lượng gói phải hủy gần như không đổi (82,9 triệu gói trong 2 giờ 51 phút).
+> Ba thứ **vẫn còn lọt**: (1) **TCP tới cổng 7777** — 104 IP, tới 49,9 Mbps mỗi IP, cổng này không chạy dịch vụ nào; (2) **IP trong nước** — 116 IP, mạnh nhất 97,6 Mbps, vẫn đúng IP đã báo hôm 06/10; (3) **flood theo pps** — 183 IP vượt 1.000 pps, một IP đạt 45.208 pps trong khi người chơi thật tối đa 96 pps.
+> **→ [bao-cao-2026-10-07.md](bao-cao-2026-10-07.md)** (kèm CSV `14`, `15`).
+
+> ### Các báo cáo trước
+> **[06/10](bao-cao-2026-10-06.md)** — ba vector mới: TCP flood 1.440 B vào 7777 đi thẳng qua scrubbing (200 IP nước ngoài ≥ 10 Mbps), SYN flood vào TCP/10000, UDP 228 B ở 135.000 pps; 235–250 Mbps lọt xuống suốt 3 giờ, server trống 1,5 giờ. Kèm CSV `12`, `13`.
+> **[02/10 và 03/10](bao-cao-2026-10-02.md)** — hai lỗ hổng đầu tiên sau khi AntiDDoS active: lưu lượng IP trong nước không được lọc (một IP Viettel 112,7 Mbps) và bão IP giả mạo 7.000–11.700 IP/giây ở 10–30 Mbps. **Chứa 12 bước cấu hình an toàn cho game** và danh sách những việc tuyệt đối không được làm. Kèm CSV `07`–`11`.
+> **Dưới đây** — hồ sơ gốc 13–25/09/2026 gửi lần đầu, kèm CSV `01`–`06`.
 
 > **Dữ liệu chi tiết dạng bảng nằm trong [`du-lieu/`](du-lieu/)** — 6 file CSV mở được bằng Excel. Xem [Phụ lục A](#phụ-lục-a--các-file-dữ-liệu-kèm-theo).
 
