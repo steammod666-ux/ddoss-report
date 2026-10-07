@@ -6,7 +6,7 @@
 **Mục đích:** cung cấp cho đội scrubbing VNPT toàn bộ hồ sơ tấn công — thời điểm, vector, băng thông, pps, cổng đích, tập IP nguồn, và các đặc trưng dùng được làm signature lọc.
 
 > ## 🔴 Cập nhật 02/10/2026 — tấn công SAU KHI AntiDDoS đã active
-> Scrubbing đã ép bot nước ngoài xuống ≤ 4,7 Mbps/IP, nhưng **(1) lưu lượng từ IP trong nước không được lọc** (một IP Viettel phát 112,7 Mbps, hai đợt 220–250 Mbps về tận thuê bao) và **(2) bão IP giả mạo 7.000–11.700 IP/giây chỉ 10–30 Mbps** vẫn đi qua, làm server game sập 5 lần. **03/10 02:00** lặp lại: một thuê bao VNPT `125.235.229.146` phát 64 Mbps suốt 17 phút không bị cắt.
+> Scrubbing đã ép bot nước ngoài xuống ≤ 4,7 Mbps/IP, nhưng **(1) lưu lượng từ IP trong nước không được lọc** (một IP Viettel phát 112,7 Mbps, hai đợt 220–250 Mbps về tận thuê bao) và **(2) bão IP giả mạo 7.000–11.700 IP/giây chỉ 10–30 Mbps** vẫn đi qua, làm server game sập 5 lần. **03/10 02:00** lặp lại: một thuê bao VNPT `125.235.229.146` phát 64 Mbps suốt 17 phút không bị cắt. **06/10**: 3 vector mới — **TCP flood 1.440 B vào 7777 đi thẳng qua scrubbing** (200 IP nước ngoài ≥ 10 Mbps), SYN flood vào TCP/10000, UDP 228 B ở 135.000 pps; 235–250 Mbps lọt xuống suốt 3 giờ, server trống 1,5 giờ (§8).
 > **→ Xem báo cáo riêng: [bao-cao-2026-10-02.md](bao-cao-2026-10-02.md)** (kèm 4 file CSV `07`–`10` trong `du-lieu/`).
 
 > **Dữ liệu chi tiết dạng bảng nằm trong [`du-lieu/`](du-lieu/)** — 6 file CSV mở được bằng Excel. Xem [Phụ lục A](#phụ-lục-a--các-file-dữ-liệu-kèm-theo).
