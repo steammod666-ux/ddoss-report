@@ -1,21 +1,24 @@
 # Báo cáo tấn công DDoS — Game server *The Isle: Evrima*
 
 **Bên bị tấn công:** thuê bao FTTH VNPT (2 đường), game server The Isle Evrima 250 slot chạy trên host Windows tại chỗ.
-**Phạm vi dữ liệu:** 13/09/2026 → 25/09/2026 10:47 (giờ VN, UTC+7).
+**Phạm vi dữ liệu:** 13/09/2026 → 08/10/2026 11:19 (giờ VN, UTC+7). Phần thân báo cáo này là hồ sơ gốc 13–25/09; các đợt sau nằm trong những báo cáo bổ sung liệt kê ngay dưới đây.
 **Nguồn dữ liệu:** log của WAF-Shield Enterprise v3.7.5 chạy trực tiếp trên host (WinDivert 2.2, bắt gói ở tầng kernel trước khi tới socket ứng dụng) — `shield.log` + `forensic.log` (snapshot mỗi 1 giây). Tổng **1,4 GB log thô** đã được bóc tách bằng script; mọi số liệu trong báo cáo sinh trực tiếp từ log, không phải ước lượng.
 **Mục đích:** cung cấp cho đội scrubbing VNPT toàn bộ hồ sơ tấn công — thời điểm, vector, băng thông, pps, cổng đích, tập IP nguồn, và các đặc trưng dùng được làm signature lọc.
 
-> ## 🔴 CẬP NHẬT 07/10/2026 — mới nhất
-> Sau khi VNPT tối ưu scrubbing trong ngày 07/10: **số giây vượt 200 Mbps giảm 99%** (1.145 → 12 giây), nhưng kẻ tấn công đổi sang **gói nhỏ** nên **pps lại tăng 81%** và lượng gói phải hủy gần như không đổi (82,9 triệu gói trong 2 giờ 51 phút).
-> Ba thứ **vẫn còn lọt**: (1) **TCP tới cổng 7777** — 104 IP, tới 49,9 Mbps mỗi IP, cổng này không chạy dịch vụ nào; (2) **IP trong nước** — 116 IP, mạnh nhất 97,6 Mbps, vẫn đúng IP đã báo hôm 06/10; (3) **flood theo pps** — 183 IP vượt 1.000 pps, một IP đạt 45.208 pps trong khi người chơi thật tối đa 96 pps.
-> **→ [bao-cao-2026-10-07.md](bao-cao-2026-10-07.md)** (kèm CSV `14`, `15`).
+> ## 🔴 CẬP NHẬT 08/10/2026 — mới nhất
+> **Kẻ tấn công đã đổi hẳn chiến thuật sang đa vector, rải mỏng — và 98,9 % địa chỉ nguồn là GIẢ MẠO.**
+> Hai pha rõ rệt trong 20 giờ: **pha A (07/10 chiều tối)** volumetric 239 Mbps / 133.602 pps với **81 % băng thông từ IP TRONG NƯỚC** → **server sập 7 lần, tổng 1 giờ 40 phút**; **pha B (08/10, 10 giờ liên tục)** chỉ 8–21 Mbps nhưng **6.000–8.764 địa chỉ nguồn mỗi giây**, mỗi nguồn 1–2 gói/s → không ngưỡng bps nào nhìn thấy, thiết bị tại chỗ chỉ chặn được 37 %, **người chơi tụt 3.249 → 514 pps rồi bỏ đi**.
+> Bằng chứng giả mạo: **98,9 % nguồn có TTL cố định 43–44** dù trải trên 191 dải /8 khắp thế giới; 31 nguồn nằm trong **dải CDN Cloudflare**; 208 nguồn là **địa chỉ mạng `.0` / broadcast `.255`** (đúng tỉ lệ 0,78 % của bộ sinh số ngẫu nhiên).
+> **→ Hai việc cần VNPT làm: (1) bật uRPF/BCP38; (2) áp mitigation cho cả chiều nội địa** (đã đề nghị 3 lần, chưa áp dụng).
+> **→ [bao-cao-2026-10-08.md](bao-cao-2026-10-08.md)** (kèm CSV `16`–`19`).
 
 > ### Các báo cáo trước
+> **[07/10](bao-cao-2026-10-07.md)** — sau khi VNPT tối ưu scrubbing: số giây vượt 200 Mbps giảm 99 % (1.145 → 12), nhưng kẻ tấn công đổi sang gói nhỏ nên pps tăng 81 %. Ba thứ còn lọt: TCP tới cổng 7777, IP trong nước, flood theo pps. Kèm CSV `14`, `15`.
 > **[06/10](bao-cao-2026-10-06.md)** — ba vector mới: TCP flood 1.440 B vào 7777 đi thẳng qua scrubbing (200 IP nước ngoài ≥ 10 Mbps), SYN flood vào TCP/10000, UDP 228 B ở 135.000 pps; 235–250 Mbps lọt xuống suốt 3 giờ, server trống 1,5 giờ. Kèm CSV `12`, `13`.
 > **[02/10 và 03/10](bao-cao-2026-10-02.md)** — hai lỗ hổng đầu tiên sau khi AntiDDoS active: lưu lượng IP trong nước không được lọc (một IP Viettel 112,7 Mbps) và bão IP giả mạo 7.000–11.700 IP/giây ở 10–30 Mbps. **Chứa 12 bước cấu hình an toàn cho game** và danh sách những việc tuyệt đối không được làm. Kèm CSV `07`–`11`.
 > **Dưới đây** — hồ sơ gốc 13–25/09/2026 gửi lần đầu, kèm CSV `01`–`06`.
 
-> **Dữ liệu chi tiết dạng bảng nằm trong [`du-lieu/`](du-lieu/)** — 6 file CSV mở được bằng Excel. Xem [Phụ lục A](#phụ-lục-a--các-file-dữ-liệu-kèm-theo).
+> **Dữ liệu chi tiết dạng bảng nằm trong [`du-lieu/`](du-lieu/)** — 19 file CSV mở được bằng Excel. Xem [Phụ lục A](#phụ-lục-a--các-file-dữ-liệu-kèm-theo).
 
 ---
 
@@ -614,6 +617,19 @@ Tất cả trong thư mục [`du-lieu/`](du-lieu/), định dạng CSV (UTF-8, p
 | [`04-ip-da-bi-waf-chan.csv`](du-lieu/04-ip-da-bi-waf-chan.csv) | 6.985 | Toàn bộ IP WAF đã tự động chặn: số lần, lần đầu, lần cuối |
 | [`05-ly-do-drop-theo-ngay.csv`](du-lieu/05-ly-do-drop-theo-ngay.csv) | 69 | Lý do hủy gói × ngày × số gói |
 | [`06-cong-dich-theo-ngay.csv`](du-lieu/06-cong-dich-theo-ngay.csv) | 14.021 | Cổng đích × ngày × tổng gói × gói bị hủy (bằng chứng chỉ UDP/7777 bị tấn công) |
+
+**Các báo cáo bổ sung (CSV `07`–`19`)** — mô tả chi tiết nằm trong phụ lục của từng báo cáo:
+
+| File | Số dòng | Nội dung | Báo cáo |
+|---|---|---|---|
+| `07`–`10` | — | Đợt tấn công, IP flood lọt scrubbing, xung spoof storm, timeline từng giây ngày 02/10 | [02/10](bao-cao-2026-10-02.md) |
+| `11` | 150 | IP nguồn đợt 03/10 02:00 | [02/10 §7](bao-cao-2026-10-02.md) |
+| `12`, `13` | 2.126 / 495 | IP nguồn và timeline theo phút ngày 06/10 | [06/10](bao-cao-2026-10-06.md) |
+| `14`, `15` | 836 / 172 | IP nguồn và timeline theo phút ngày 07/10 ca chiều | [07/10](bao-cao-2026-10-07.md) |
+| [`16-2026-10-08-timeline-theo-phut.csv`](du-lieu/16-2026-10-08-timeline-theo-phut.csv) | 802 | Timeline từng phút 07/10 15:30 → 08/10 11:19, đã loại các giây host tự tải file | [08/10](bao-cao-2026-10-08.md) |
+| [`17-2026-10-08-bang-chung-ip-gia-mao.csv`](du-lieu/17-2026-10-08-bang-chung-ip-gia-mao.csv) | 239 | **Bằng chứng giả mạo IP**: nguồn thuộc dải Cloudflare CDN, địa chỉ mạng `.0`, broadcast `.255` | [08/10 §4.2](bao-cao-2026-10-08.md) |
+| [`18-2026-10-07-ip-nguon-theo-quoc-gia.csv`](du-lieu/18-2026-10-07-ip-nguon-theo-quoc-gia.csv) | 2.944 | IP nguồn pha A, phân loại Việt Nam / nước ngoài, Mbps và pps đỉnh | [08/10 §3.2](bao-cao-2026-10-08.md) |
+| [`19-2026-10-08-ip-nguon-va-ttl.csv`](du-lieu/19-2026-10-08-ip-nguon-va-ttl.csv) | 27.214 | IP nguồn pha B kèm TTL — cơ sở của con số 98,9 % TTL 43–44 | [08/10 §4.2](bao-cao-2026-10-08.md) |
 
 ## Phụ lục B — Phương pháp và độ tin cậy
 
