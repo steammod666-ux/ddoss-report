@@ -1,11 +1,20 @@
 # Báo cáo tấn công DDoS — Game server *The Isle: Evrima*
 
 **Bên bị tấn công:** thuê bao FTTH VNPT (2 đường), game server The Isle Evrima 250 slot chạy trên host Windows tại chỗ.
-**Phạm vi dữ liệu:** 13/09/2026 → 10/10/2026 15:17 (giờ VN, UTC+7). Phần thân báo cáo này là hồ sơ gốc 13–25/09; các đợt sau nằm trong những báo cáo bổ sung liệt kê ngay dưới đây.
+**Phạm vi dữ liệu:** 13/09/2026 → 12/10/2026 16:13 (giờ VN, UTC+7). Phần thân báo cáo này là hồ sơ gốc 13–25/09; các đợt sau nằm trong những báo cáo bổ sung liệt kê ngay dưới đây.
 **Nguồn dữ liệu:** log của WAF-Shield Enterprise v3.7.5 chạy trực tiếp trên host (WinDivert 2.2, bắt gói ở tầng kernel trước khi tới socket ứng dụng) — `shield.log` + `forensic.log` (snapshot mỗi 1 giây). Tổng **1,4 GB log thô** đã được bóc tách bằng script; mọi số liệu trong báo cáo sinh trực tiếp từ log, không phải ước lượng.
 **Mục đích:** cung cấp cho đội scrubbing VNPT toàn bộ hồ sơ tấn công — thời điểm, vector, băng thông, pps, cổng đích, tập IP nguồn, và các đặc trưng dùng được làm signature lọc.
 
-> ## 🟠 CẬP NHẬT 09–10/10/2026 — mới nhất
+> ## 🔴 CẬP NHẬT 11/10/2026 — mới nhất
+> **Kẻ tấn công đã ĐỔI CỔNG, và đổi cả cách lách ngưỡng. Đêm 11/10 23:41–23:53 có hai pha liên tiếp, cả hai đều đi thẳng xuống thuê bao.**
+> **Pha 1 — TCP flood vào cổng quản trị RCON `8888`: 374,1 Mbps / 32.861 pps**, gói 1.443 B, **178 địa chỉ nguồn với 99,96 % là thuê bao trong nước**, TTL ổn định 47–56 (host thật, bắt tay TCP đầy đủ). Thiết bị tại chỗ chỉ hủy được **12,7 %**. Lưu lượng thật trên cổng này khi sạch là **51 pps / 0,02 Mbps** — tách biệt **175×** về pps, **6.000×** về băng thông. Và trong 21 giờ dữ liệu, cổng 8888 chỉ có **duy nhất MỘT địa chỉ nguồn hợp pháp** ⇒ **khoá cứng theo địa chỉ nguồn là luật rẻ nhất, chặn 100 %, không rủi ro.**
+> **Cùng botnet với hai đợt TCP/10000 đã báo:** **63/178 địa chỉ (35 %) trùng CSV `20` và `23`** — `171.225.149.89`, `171.225.148.212`, `42.114.69.155` là nguồn mạnh nhất của cả ba đêm. ⇒ **Luật gắn theo từng cổng sẽ luôn đi sau một bước; cần luật theo nguồn áp cho TẤT CẢ cổng TCP đã khai.**
+> **Pha 2 — UDP rải mỏng vào 7777, chỉ 8 Mbps, nhưng thiết bị tại chỗ hủy 0,0 %** và đây là pha gây thiệt hại thật: 5.500–6.000 pps rác tới tiến trình game, `verified` sụt 100 % → 25 %, **RCON chết hai lần**, mất ≈18 % người chơi không quay lại. Đợt này được **hiệu chỉnh để lách ngưỡng**: số nguồn chưa xác thực đứng ở **1.841 — đúng 92 % ngưỡng 2.000**, và TTL được rải vào đúng dải người chơi thật thay vì dồn một cụm như đợt 08/10 (vốn bị diệt 95 %). Vẫn còn hai dấu hiệu tố giác: **TTL 65–96** và **TTL > 240** hoàn toàn không tồn tại trong các giây sạch ⇒ **địa chỉ nguồn bị giả mạo**.
+> **→ Bốn luật đề nghị:** (1) whitelist nguồn cho TCP/8888; (2) rate-limit theo nguồn **2 Mbps / 300 pps / 10 kết nối mới mỗi giây** áp cho **mọi** cổng TCP đã khai, không riêng cổng 10000; (3) đưa chiều **nội địa** vào mẫu lọc (lần thứ 6); (4) **uRPF / BCP38** (lần thứ 3) — biện pháp bền duy nhất cho pha 2.
+> ⚠️ **File `25` là danh sách chặn dùng được. File `27` (như `22`, `24`) là bằng chứng giả mạo, KHÔNG dùng để chặn.**
+> **→ [bao-cao-2026-10-11.md](bao-cao-2026-10-11.md)** (kèm CSV `25`–`27`).
+
+> ### 🟠 Trước đó — 09–10/10/2026
 > **Scrubbing chặn UDP rất tốt: Arbor 1,0–9,6 Gbps / 12,3 Mpps → xuống thuê bao chỉ 20–51 Mbps (~99,5 %).** Khung 09/10 11:00–17:00, 6 giờ đông người chơi, thiết bị tại chỗ ghi nhận **0 gói phải hủy**. Giữ nguyên cấu hình cho chiều quốc tế.
 > **Nhưng cổng TCP/10000 bị đánh BA LẦN và lần nào cũng đi thẳng xuống thuê bao — hai lần làm SẬP DỊCH VỤ:** 09/10 23:36 **523 Mbps**, 10/10 12:36 **418 Mbps** (host thật, bắt tay đầy đủ, 98 % nội địa, **72 % cùng địa chỉ giữa hai đợt**), và 10/10 15:14 **169 Mbps** (địa chỉ **giả mạo**, TCP không-SYN, cùng một IP tới với TTL 1 / 21 / 117 / 201 / 244).
 > **Hệ thống chặn rất tốt những gì nó NHẬN RA** — đối chiếu từng cảnh báo Arbor với host: 158641 ép **14,6 Gbps → 169 Mbps (98,8 %)**, 158635 chặn **100 %**. Nhưng cảnh báo **158636** ghi **118,5 Mbps / 154,6 Kpps (≈96 B/gói)** trong khi host cùng lúc nhận **418 Mbps / 39,6 Kpps (≈1.320 B/gói)** — thượng nguồn không thể đo ít hơn phần đi qua nó ⇒ **luồng TCP gói 1,4 KB vào cổng 10000 KHÔNG được phân loại là tấn công**. `Misuse Types` của cảnh báo đó chỉ có ICMP / TCP RST / SYN-ACK Amplification, không có loại nào mô tả luồng TCP mang dữ liệu.
@@ -21,7 +30,7 @@
 > **[02/10 và 03/10](bao-cao-2026-10-02.md)** — hai lỗ hổng đầu tiên sau khi AntiDDoS active: lưu lượng IP trong nước không được lọc (một IP Viettel 112,7 Mbps) và bão IP giả mạo 7.000–11.700 IP/giây ở 10–30 Mbps. **Chứa 12 bước cấu hình an toàn cho game** và danh sách những việc tuyệt đối không được làm. Kèm CSV `07`–`11`.
 > **Dưới đây** — hồ sơ gốc 13–25/09/2026 gửi lần đầu, kèm CSV `01`–`06`.
 
-> **Dữ liệu chi tiết dạng bảng nằm trong [`du-lieu/`](du-lieu/)** — 24 file CSV mở được bằng Excel. Xem [Phụ lục A](#phụ-lục-a--các-file-dữ-liệu-kèm-theo).
+> **Dữ liệu chi tiết dạng bảng nằm trong [`du-lieu/`](du-lieu/)** — 27 file CSV mở được bằng Excel. Xem [Phụ lục A](#phụ-lục-a--các-file-dữ-liệu-kèm-theo).
 
 ---
 
@@ -621,7 +630,7 @@ Tất cả trong thư mục [`du-lieu/`](du-lieu/), định dạng CSV (UTF-8, p
 | [`05-ly-do-drop-theo-ngay.csv`](du-lieu/05-ly-do-drop-theo-ngay.csv) | 69 | Lý do hủy gói × ngày × số gói |
 | [`06-cong-dich-theo-ngay.csv`](du-lieu/06-cong-dich-theo-ngay.csv) | 14.021 | Cổng đích × ngày × tổng gói × gói bị hủy (bằng chứng chỉ UDP/7777 bị tấn công) |
 
-**Các báo cáo bổ sung (CSV `07`–`19`)** — mô tả chi tiết nằm trong phụ lục của từng báo cáo:
+**Các báo cáo bổ sung (CSV `07`–`27`)** — mô tả chi tiết nằm trong phụ lục của từng báo cáo:
 
 | File | Số dòng | Nội dung | Báo cáo |
 |---|---|---|---|
@@ -638,6 +647,9 @@ Tất cả trong thư mục [`du-lieu/`](du-lieu/), định dạng CSV (UTF-8, p
 | [`22-2026-10-09-ip-nguon-udp-va-ttl.csv`](du-lieu/22-2026-10-09-ip-nguon-udp-va-ttl.csv) | 19.061 | IP nguồn đợt UDP giả mạo kèm TTL — cơ sở của con số 99,9 % | [09/10 §4](bao-cao-2026-10-09.md) |
 | [`23-2026-10-10-ip-nguon-tcp-10000.csv`](du-lieu/23-2026-10-10-ip-nguon-tcp-10000.csv) | 104 | **Đợt TCP/10000 lặp lại ngày 10/10** — 72 % địa chỉ trùng đợt 09/10, phân loại VN / nước ngoài | [09/10 §8](bao-cao-2026-10-09.md) |
 | [`24-2026-10-10-1514-ip-nguon-tcp-10000-gia-mao.csv`](du-lieu/24-2026-10-10-1514-ip-nguon-tcp-10000-gia-mao.csv) | 129 | Đợt 15:14 — **địa chỉ GIẢ MẠO, KHÔNG dùng để chặn**, chỉ là bằng chứng cho uRPF/BCP38 | [09/10 §9](bao-cao-2026-10-09.md) |
+| [`25-2026-10-11-ip-nguon-tcp-8888.csv`](du-lieu/25-2026-10-11-ip-nguon-tcp-8888.csv) | 178 | **Đợt TCP/8888 374 Mbps đêm 11/10** — pps đỉnh, Mbps, cỡ gói, TTL, số SYN, phân loại VN / nước ngoài. **Dùng được để chặn** | [11/10 §2](bao-cao-2026-10-11.md) |
+| [`26-2026-10-11-timeline-theo-phut.csv`](du-lieu/26-2026-10-11-timeline-theo-phut.csv) | 19 | Timeline từng phút 23:38 → 23:56, tách riêng cổng 8888 và 7777, số nguồn, ICMP, tỉ lệ hủy | [11/10](bao-cao-2026-10-11.md) |
+| [`27-2026-10-11-bang-chung-udp-rai-mong-duoi-nguong.csv`](du-lieu/27-2026-10-11-bang-chung-udp-rai-mong-duoi-nguong.csv) | 450 | Từng giây pha 2: số nguồn chưa xác thực **luôn < 2.000**, phân bố TTL, ICMP, số gói bị hủy. **KHÔNG dùng để chặn** | [11/10 §3](bao-cao-2026-10-11.md) |
 
 ## Phụ lục B — Phương pháp và độ tin cậy
 
